@@ -24,7 +24,7 @@ spec:
       
       containers:
       - name: frontend
-        image: tejasshende056/three-tier-frontend:latest
+        image: tejasshende056/three-tier-frontend:5
 
         imagePullPolicy: Always
         env:

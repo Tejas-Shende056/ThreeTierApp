@@ -24,7 +24,7 @@ spec:
       
       containers:
       - name: api
-        image: tejasshende056/three-tier-backend:latest
+        image: tejasshende056/three-tier-backend:5
         imagePullPolicy: Always
         env:
           - name: MONGO_CONN_STR
