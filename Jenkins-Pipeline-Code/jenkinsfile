@@ -45,7 +45,7 @@ pipeline {
                     git config user.name "Jenkins CI"
                     git add Kubernetes-Manifests-file/
                     git commit -m "Jenkins Auto-update image tags to build #${IMAGE_TAG}" || true
-                    git push https://${GITHUB_CRED_USR}:${GITHUB_CRED_PSW}@github.com/${GITHUB_USER}/TWSThreeTierAppChallenge.git main
+                    git push https://${GITHUB_CRED_USR}:${GITHUB_CRED_PSW}@github.com/${GITHUB_USER}/ThreeTierApp.git main
                 """
             }
         }
