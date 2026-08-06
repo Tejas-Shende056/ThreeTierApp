@@ -1,0 +1,53 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKERHUB_CRED = credentials('docker-hub-credentials')
+        GITHUB_CRED    = credentials('github-credentials')
+        DOCKER_USER    = 'tejasshende056'  // <--- Yahan apna Docker Hub Username daal
+        GITHUB_USER    = 'Tejas-Shende056'     // <--- Yahan apna GitHub Username daal
+        IMAGE_TAG      = "${BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main', url: "https://github.com/${GITHUB_USER}/TWSThreeTierAppChallenge.git"
+            }
+        }
+
+        stage('Build & Push Backend') {
+            steps {
+                dir('Application-Code/backend') {
+                    sh "echo $DOCKERHUB_CRED_PSW | docker login -u $DOCKERHUB_CRED_USR --password-stdin"
+                    sh "docker build -t ${DOCKER_USER}/three-tier-backend:${IMAGE_TAG} ."
+                    sh "docker push ${DOCKER_USER}/three-tier-backend:${IMAGE_TAG}"
+                }
+            }
+        }
+
+        stage('Build & Push Frontend') {
+            steps {
+                dir('Application-Code/frontend') {
+                    sh "docker build -t ${DOCKER_USER}/three-tier-frontend:${IMAGE_TAG} ."
+                    sh "docker push ${DOCKER_USER}/three-tier-frontend:${IMAGE_TAG}"
+                }
+            }
+        }
+
+        stage('Update Manifests for ArgoCD') {
+            steps {
+                sh """
+                    sed -i 's|image: .*three-tier-backend:.*|image: ${DOCKER_USER}/three-tier-backend:${IMAGE_TAG}|g' Kubernetes-Manifests-file/Backend/deployment.yaml
+                    sed -i 's|image: .*three-tier-frontend:.*|image: ${DOCKER_USER}/three-tier-frontend:${IMAGE_TAG}|g' Kubernetes-Manifests-file/Frontend/deployment.yaml
+                    
+                    git config user.email "jenkins@devops.com"
+                    git config user.name "Jenkins CI"
+                    git add Kubernetes-Manifests-file/
+                    git commit -m "Jenkins Auto-update image tags to build #${IMAGE_TAG}" || true
+                    git push https://${GITHUB_CRED_USR}:${GITHUB_CRED_PSW}@github.com/${GITHUB_USER}/TWSThreeTierAppChallenge.git main
+                """
+            }
+        }
+    }
+}
